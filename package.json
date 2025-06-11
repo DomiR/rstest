@@ -1,0 +1,51 @@
+{
+  "name": "@domir/rstest",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "A set of helpers for testing Effects with rstest test",
+  "homepage": "https://github.com/DomiR/rstest",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DomiR/rstest.git",
+    "directory": "packages/rstest"
+  },
+  "bugs": {
+    "url": "https://github.com/DomiR/rstest/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist",
+    "linkDirectory": false
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts",
+    "./internal/*": null
+  },
+  "scripts": {
+    "build": "pnpm build-esm && pnpm build-annotate && pnpm build-cjs && build-utils pack-v3",
+    "build-esm": "tsc -b tsconfig.build.json",
+    "build-cjs": "babel build/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir build/cjs --source-maps",
+    "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
+    "check": "tsc -b tsconfig.json",
+    "test": "rstest run test/**.test.ts"
+  },
+  "peerDependencies": {
+    "effect": "^3.15.2",
+    "@rstest/core": "^0.0.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.8",
+    "@babel/core": "^7.25.2",
+    "@babel/plugin-transform-export-namespace-from": "^7.24.7",
+    "@babel/plugin-transform-modules-commonjs": "^7.24.8",
+    "@effect/build-utils": "^0.8.3",
+    "@effect/docgen": "^0.5.2",
+    "@rstest/core": "^0.0.1",
+    "@types/node": "^24.0.0",
+    "babel-plugin-annotate-pure-calls": "^0.5.0",
+    "effect": "^3.15.2"
+  }
+}
