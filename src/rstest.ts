@@ -1,4 +1,3 @@
-// import * as B from "bun:test"
 import * as R from '@rstest/core';
 import { describe as rstestDescribe } from '@rstest/core';
 
@@ -9,7 +8,7 @@ export type TestAPI = typeof R.it
 // Currently test options seep to be timeout only.
 export type TestOptions = number
 
-// We reexport the type of the test function from bun:test
+// We reexport the type of the test function from @rstest/core
 // as extending it did not work properly..
 export type TestFunction = (
   label: string,

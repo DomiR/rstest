@@ -221,7 +221,7 @@ export const layer = <R, E, const ExcludeTestServices extends boolean = false>(
       }
     })
 
-  // Buns beforeAll and afterAll need to be called in a describe block
+  // TODO: Need to check if rstest beforeAll and afterAll also needs to be called in a describe block
   // to reliably run before and after all tests. In that case we just use an empty label.
   const label = args.length === 1 ? "" : args[0]
 

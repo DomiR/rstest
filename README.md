@@ -1,14 +1,14 @@
 # Introduction
 
-Welcome to your guide on testing Effect-based applications using `bun:test` and the `@domir/rstest` package. This package simplifies running tests for Effect-based code with Bun test.
+Welcome to your guide on testing Effect-based applications using `@rstest/core` and the `@domir/rstest` package. This package simplifies running tests for Effect-based code with rstest.
 
 In this guide, we'll walk you through setting up the necessary dependencies and provide examples of how to write Effect-based tests using `@domir/rstest`.
 
 # Requirements
 
-First, ensure you have [`bun`](https://bun.sh/) installed (version `1.6.0` or later).
+First, ensure you have [`@rstest/core`](https://github.com/web-infra-dev/rstest) installed.
 
-Next, install the `@domir/rstest` package, which integrates Effect with Bun test.
+Next, install the `@domir/rstest` package, which integrates Effect with rstest.
 
 ```sh
 bun add -D @domir/rstest
@@ -22,7 +22,7 @@ The main entry point is the following import:
 import { it } from "@domir/rstest"
 ```
 
-This import enhances the standard `it` function from `bun:test` with several powerful features, including:
+This import enhances the standard `it` function from `@rstest/core` with several powerful features, including:
 
 | Feature         | Description                                                                                            |
 | --------------- | ------------------------------------------------------------------------------------------------------ |
