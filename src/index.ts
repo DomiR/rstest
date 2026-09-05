@@ -3,13 +3,11 @@
  */
 import type * as Duration from "effect/Duration"
 import type * as Effect from "effect/Effect"
-import type * as FC from "effect/FastCheck"
 import type * as Layer from "effect/Layer"
 import type * as Schema from "effect/Schema"
 import type * as Scope from "effect/Scope"
-import type * as TestServices from "effect/TestServices"
+import type * as FC from "effect/testing/FastCheck"
 import * as R from "./rstest.js"
-// import * as R from "@rstest/core"
 import * as internal from "./internal/internal.js"
 
 /**
@@ -39,7 +37,7 @@ export namespace Rstest {
   export interface Test<R> {
     <A, E>(
       name: string,
-      self: TestFunction<A, E, R, []>,
+      self: TestFunction<A, E, R, [R.TestContext]>,
       timeout?: number | R.TestOptions
     ): void
   }
@@ -48,8 +46,8 @@ export namespace Rstest {
    * @since 1.0.0
    */
   export type Arbitraries =
-    | Array<Schema.Schema.Any | FC.Arbitrary<any>>
-    | { [K in string]: Schema.Schema.Any | FC.Arbitrary<any> }
+    | Array<Schema.Schema<any> | FC.Arbitrary<any>>
+    | { [K in string]: Schema.Schema<any> | FC.Arbitrary<any> }
 
   /**
    * @since 1.0.0
@@ -75,35 +73,43 @@ export namespace Rstest {
         E,
         R,
         [
-          { [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Schema.Schema.Type<Arbs[K]> }
+          {
+            [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T
+              : Arbs[K] extends Schema.Schema<infer T> ? T
+              : never
+          },
+          R.TestContext
         ]
       >,
-      timeout?: number,
-      fastCheck?: FC.Parameters<
-        { [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Schema.Schema.Type<Arbs[K]> }
-      >
+      timeout?:
+        | number
+        | R.TestOptions & {
+          fastCheck?: FC.Parameters<
+            {
+              [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Arbs[K] extends Schema.Schema<infer T> ? T
+              : never
+            }
+          >
+        }
     ) => void
   }
 
   /**
    * @since 1.0.0
    */
-  export interface MethodsNonLive<R = never, ExcludeTestServices extends boolean = false> extends API {
-    readonly effect: Rstest.Tester<(ExcludeTestServices extends true ? never : TestServices.TestServices) | R>
+  export interface MethodsNonLive<R = never> extends API {
+    readonly effect: Rstest.Tester<R | Scope.Scope>
     readonly flakyTest: <A, E, R2>(
-      self: Effect.Effect<A, E, R2>,
-      timeout?: Duration.DurationInput
+      self: Effect.Effect<A, E, R2 | Scope.Scope>,
+      timeout?: Duration.Input
     ) => Effect.Effect<A, never, R2>
-    readonly scoped: Rstest.Tester<
-      (ExcludeTestServices extends true ? never : TestServices.TestServices) | Scope.Scope | R
-    >
     readonly layer: <R2, E>(layer: Layer.Layer<R2, E, R>, options?: {
-      readonly timeout?: Duration.DurationInput
+      readonly timeout?: Duration.Input
     }) => {
-      (f: (it: Rstest.MethodsNonLive<R | R2, ExcludeTestServices>) => void): void
+      (f: (it: Rstest.MethodsNonLive<R | R2>) => void): void
       (
         name: string,
-        f: (it: Rstest.MethodsNonLive<R | R2, ExcludeTestServices>) => void
+        f: (it: Rstest.MethodsNonLive<R | R2>) => void
       ): void
     }
 
@@ -114,12 +120,22 @@ export namespace Rstest {
       name: string,
       arbitraries: Arbs,
       self: (
-        properties: { [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Schema.Schema.Type<Arbs[K]> }
+        properties: {
+          [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Arbs[K] extends Schema.Schema<infer T> ? T
+          : never
+        },
+        ctx: R.TestContext
       ) => void,
-      timeout?:number,
-      fastCheck?: FC.Parameters<
-        { [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Schema.Schema.Type<Arbs[K]> }
-      >
+      timeout?:
+        | number
+        | R.TestOptions & {
+          fastCheck?: FC.Parameters<
+            {
+              [K in keyof Arbs]: Arbs[K] extends FC.Arbitrary<infer T> ? T : Arbs[K] extends Schema.Schema<infer T> ? T
+              : never
+            }
+          >
+        }
     ) => void
   }
 
@@ -127,30 +143,35 @@ export namespace Rstest {
    * @since 1.0.0
    */
   export interface Methods<R = never> extends MethodsNonLive<R> {
-    readonly live: Rstest.Tester<R>
-    readonly scopedLive: Rstest.Tester<Scope.Scope | R>
+    readonly live: Rstest.Tester<Scope.Scope | R>
+    readonly layer: <R2, E>(layer: Layer.Layer<R2, E, R>, options?: {
+      readonly memoMap?: Layer.MemoMap
+      readonly timeout?: Duration.Input
+      readonly excludeTestServices?: boolean
+    }) => {
+      (f: (it: Rstest.MethodsNonLive<R | R2>) => void): void
+      (
+        name: string,
+        f: (it: Rstest.MethodsNonLive<R | R2>) => void
+      ): void
+    }
   }
 }
 
 /**
  * @since 1.0.0
  */
-export const effect: Rstest.Tester<TestServices.TestServices> = internal.effect
+export const addEqualityTesters: () => void = internal.addEqualityTesters
 
 /**
  * @since 1.0.0
  */
-export const scoped: Rstest.Tester<TestServices.TestServices | Scope.Scope> = internal.scoped
+export const effect: Rstest.Tester<Scope.Scope> = internal.effect
 
 /**
  * @since 1.0.0
  */
-export const live: Rstest.Tester<never> = internal.live
-
-/**
- * @since 1.0.0
- */
-export const scopedLive: Rstest.Tester<Scope.Scope> = internal.scopedLive
+export const live: Rstest.Tester<Scope.Scope> = internal.live
 
 /**
  * Share a `Layer` between multiple tests, optionally wrapping
@@ -160,58 +181,56 @@ export const scopedLive: Rstest.Tester<Scope.Scope> = internal.scopedLive
  *
  * ```ts
  * import { expect, layer } from "@domir/rstest"
- * import { Context, Effect, Layer } from "effect"
+ * import { Effect, Layer, Context } from "effect"
  *
- * class Foo extends Context.Tag("Foo")<Foo, "foo">() {
+ * class Foo extends Context.Service<Foo, "foo">()("Foo") {
  *   static Live = Layer.succeed(Foo, "foo")
  * }
  *
- * class Bar extends Context.Tag("Bar")<Bar, "bar">() {
+ * class Bar extends Context.Service<Bar, "bar">()("Bar") {
  *   static Live = Layer.effect(
  *     Bar,
- *     Effect.map(Foo, () => "bar" as const)
+ *     Effect.map(Effect.service(Foo), () => "bar" as const)
  *   )
  * }
  *
  * layer(Foo.Live)("layer", (it) => {
  *   it.effect("adds context", () =>
- *     Effect.gen(function* () {
+ *     Effect.gen(function*() {
  *       const foo = yield* Foo
  *       expect(foo).toEqual("foo")
- *     })
- *   )
+ *     }))
  *
  *   it.layer(Bar.Live)("nested", (it) => {
  *     it.effect("adds context", () =>
- *       Effect.gen(function* () {
+ *       Effect.gen(function*() {
  *         const foo = yield* Foo
  *         const bar = yield* Bar
  *         expect(foo).toEqual("foo")
  *         expect(bar).toEqual("bar")
- *       })
- *     )
+ *       }))
  *   })
  * })
  * ```
  */
-export const layer: <R, E, const ExcludeTestServices extends boolean = false>(
+export const layer: <R, E>(
   layer_: Layer.Layer<R, E>,
   options?: {
     readonly memoMap?: Layer.MemoMap
-    readonly timeout?: Duration.DurationInput
-    readonly excludeTestServices?: ExcludeTestServices
+    readonly timeout?: Duration.Input
+    readonly excludeTestServices?: boolean
   }
 ) => {
-  (f: (it: Rstest.MethodsNonLive<R, ExcludeTestServices>) => void): void
-  (name: string, f: (it: Rstest.MethodsNonLive<R, ExcludeTestServices>) => void): void
+  (f: (it: Rstest.MethodsNonLive<R>) => void): void
+  (name: string, f: (it: Rstest.MethodsNonLive<R>) => void): void
 } = internal.layer
 
 /**
  * @since 1.0.0
  */
 export const flakyTest: <A, E, R>(
-  self: Effect.Effect<A, E, R>,
-  timeout?: Duration.DurationInput
+  self: Effect.Effect<A, E, R | Scope.Scope>,
+  timeout?: Duration.Input
 ) => Effect.Effect<A, never, R> = internal.flakyTest
 
 /**
@@ -222,16 +241,15 @@ export const prop: Rstest.Methods["prop"] = internal.prop
 /**
  * @since 1.0.0
  */
-
-/** @ignored */
-const methods = { effect, live, flakyTest, scoped, scopedLive, layer, prop } as const
-
-/**
- * @since 1.0.0
- */
-export const it: Rstest.Methods & R.TestFunction = Object.assign(R.it, methods)
+export const it: Rstest.Methods = internal.makeMethods(R.it)
 
 /**
  * @since 1.0.0
  */
 export const makeMethods: (it: R.TestAPI) => Rstest.Methods = internal.makeMethods
+
+/**
+ * @since 1.0.0
+ */
+export const describeWrapped: (name: string, f: (it: Rstest.Methods) => void) => R.SuiteCollector =
+  internal.describeWrapped

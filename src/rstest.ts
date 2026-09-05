@@ -1,36 +1,68 @@
-import * as R from '@rstest/core';
-import { describe as rstestDescribe } from '@rstest/core';
+/**
+ * @since 1.0.0
+ */
+import * as R from "@rstest/core"
 
-
-// export type TestAPI = B.Test
+/**
+ * @since 1.0.0
+ */
 export type TestAPI = typeof R.it
 
-// Currently test options seep to be timeout only.
-export type TestOptions = number
+/**
+ * @since 1.0.0
+ */
+export type TestOptions = R.TestOptions
 
-// We reexport the type of the test function from @rstest/core
-// as extending it did not work properly..
+/**
+ * @since 1.0.0
+ */
+export type TestContext = R.TestContext
+
+/**
+ * @since 1.0.0
+ */
 export type TestFunction = (
   label: string,
-  fn: (() => void | Promise<void>),
-  options?: TestOptions
+  fn: (() => void | Promise<void>) | ((context: TestContext) => void | Promise<void>),
+  options?: number | TestOptions
 ) => void
 
-declare type MaybePromise<T> = T | Promise<T>;
-
-export declare interface TestEachFn {
-    <T extends readonly [unknown, ...Array<unknown>]>(cases: T): (description: string, fn: (...args: [...T]) => MaybePromise<void>, timeout?: number) => void;
-}
+/**
+ * @since 1.0.0
+ */
 export type SuiteCollector = any
 
-export { it, beforeAll, afterAll, beforeEach, afterEach, expect } from '@rstest/core';
+/**
+ * @since 1.0.0
+ */
+export const it: TestAPI = R.it
 
+/**
+ * @since 1.0.0
+ */
+export const describe = R.describe
 
-// We patch the describe function types, as they are faulty in the core package.
-// Cases here should be T and not array of T, as T extends [unknown, ...Array<unknown>] already.
-export declare interface DescribeEachFn {
-    <T extends readonly [unknown, ...Array<unknown>]>(cases: T): (description: string, fn: (...args: [...T]) => MaybePromise<void>) => void;
-}
-declare type DescribeFnRstest = (description: string, fn?: () => void) => void;
-export type DescribeFn = DescribeFnRstest & Omit<typeof rstestDescribe, "each"> & { each: DescribeEachFn }
-export const describe: DescribeFn = rstestDescribe
+/**
+ * `beforeAll`/`afterAll` are re-exported (rather than assigned to a local
+ * `const`) because their `@rstest/core` listener types reference an
+ * unexported `SuiteContext` type; declaration emit can't name that type from
+ * an inferred `const` binding, but a re-export statement doesn't need to.
+ *
+ * @since 1.0.0
+ */
+export { afterAll, beforeAll } from "@rstest/core"
+
+/**
+ * @since 1.0.0
+ */
+export const beforeEach = R.beforeEach
+
+/**
+ * @since 1.0.0
+ */
+export const afterEach = R.afterEach
+
+/**
+ * @since 1.0.0
+ */
+export const expect = R.expect

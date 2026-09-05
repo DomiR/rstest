@@ -24,13 +24,19 @@ import { it } from "@domir/rstest"
 
 This import enhances the standard `it` function from `@rstest/core` with several powerful features, including:
 
-| Feature         | Description                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------ |
-| `it.effect`     | Automatically injects a `TestContext` (e.g., `TestClock`) when running a test.                         |
-| `it.live`       | Runs the test with the live Effect environment.                                                        |
-| `it.scoped`     | Allows running an Effect program that requires a `Scope`.                                              |
-| `it.scopedLive` | Combines the features of `scoped` and `live`, using a live Effect environment that requires a `Scope`. |
-| `it.flakyTest`  | Facilitates the execution of tests that might occasionally fail.                                       |
+| Feature        | Description                                                                                                                                              |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `it.effect`    | Runs the test with the `TestClock` test environment, inside a `Scope`, and passes rstest's test context (`ctx`) to the test function.                    |
+| `it.live`      | Runs the test with the live Effect environment, inside a `Scope`, and passes rstest's test context (`ctx`) to the test function.                         |
+| `it.flakyTest` | Facilitates the execution of tests that might occasionally fail.                                                                                          |
+
+# Publishing
+
+```sh
+bun run build && cd dist && bun publish
+```
+
+The `publishConfig.directory` field in `package.json` is honored by pnpm only. Bun does not read it, so `bun publish` has to be run from inside `dist/` directly rather than from the package root.
 
 <!-- # Writing Tests with `it.effect`
 
@@ -41,10 +47,10 @@ Here's how to use `it.effect` to write your tests:
 ```ts
 import { it } from "@domir/rstest"
 
-it.effect("test name", () => EffectContainingAssertions, timeout: number | TestOptions = 5_000)
+it.effect("test name", (ctx) => EffectContainingAssertions, timeout: number | TestOptions = 5_000)
 ```
 
-`it.effect` automatically provides a `TestContext`, allowing access to services like [`TestClock`](#using-the-testclock).
+`it.effect` automatically provides the test environment, giving access to services like [`TestClock`](#using-the-testclock), and passes rstest's test context (`ctx`, with `ctx.signal`, `ctx.task`, `ctx.onTestFailed`, and so on) as the argument to your test function.
 
 ## Testing Successful Operations
 
@@ -109,7 +115,7 @@ it.effect("test failure as Exit", () =>
 
 ## Using the TestClock
 
-When writing tests with `it.effect`, a `TestContext` is automatically provided. This context gives access to various testing services, including the [`TestClock`](https://effect.website/docs/guides/testing/testclock), which allows you to simulate the passage of time in your tests.
+When writing tests with `it.effect`, the test environment is provided automatically. It gives access to various testing services, including the [`TestClock`](https://effect.website/docs/guides/testing/testclock), which allows you to simulate the passage of time in your tests.
 
 **Note**: If you want to use the real-time clock (instead of the simulated one), you can switch to `it.live`.
 
@@ -264,11 +270,11 @@ it.live("it.live displays a log", () =>
 )
 ```
 
-# Writing Tests with `it.scoped`
+# Managing Resources with `Effect.acquireRelease`
 
-The `it.scoped` method is used for tests that involve `Effect` programs needing a `Scope`. A `Scope` ensures that any resources your test acquires are managed properly, meaning they will be released when the test completes. This helps prevent resource leaks and guarantees test isolation.
+`it.effect` and `it.live` both run your test inside a `Scope`, so an `Effect` program that acquires a resource with `Effect.acquireRelease` works directly, with no extra tester needed for it. Any resource acquired during the test is released automatically once the test completes (or is interrupted, for example on a timeout), which prevents resource leaks and keeps tests isolated from each other.
 
-**Example** (Using `it.scoped` to Manage Resource Lifecycle)
+**Example** (Managing a Resource's Lifecycle)
 
 ```ts
 import { it } from "@domir/rstest"
@@ -281,15 +287,7 @@ const release = Console.log("release resource")
 // Defining a resource that requires proper management
 const resource = Effect.acquireRelease(acquire, () => release)
 
-// Incorrect usage: This will result in a type error because it lacks a scope
 it.effect("run with scope", () =>
-  Effect.gen(function* () {
-    yield* resource
-  })
-)
-
-// Correct usage: Using 'it.scoped' to manage the scope correctly
-it.scoped("run with scope", () =>
   Effect.gen(function* () {
     yield* resource
   })
