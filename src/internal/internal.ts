@@ -9,6 +9,7 @@ import * as Exit from "effect/Exit"
 import { flow, pipe } from "effect/Function"
 import * as Layer from "effect/Layer"
 import { isObject } from "effect/Predicate"
+import * as Rec from "effect/Record"
 import * as Schedule from "effect/Schedule"
 import * as Schema from "effect/Schema"
 import * as Scope from "effect/Scope"
@@ -125,12 +126,8 @@ const makeTester = <R2>(
 
     const arbs = fc.record(
       Object.keys(arbitraries).reduce(function(result, key) {
-        const arb: any = (arbitraries as any)[key]
-        if (Schema.isSchema(arb)) {
-          result[key] = Schema.toArbitrary(arb)(fc)
-        } else {
-          result[key] = arb
-        }
+        const arb: any = arbitraries[key]
+        Rec.assignProperty(result, key, Schema.isSchema(arb) ? Schema.toArbitrary(arb)(fc) : arb)
         return result
       }, {} as Record<string, fc.Arbitrary<any>>)
     )
@@ -171,11 +168,11 @@ export const prop: Rstest.Rstest.Methods["prop"] = (name, arbitraries, self, tim
 
   const arbs = fc.record(
     Object.keys(arbitraries).reduce(function(result, key) {
-      const arb: any = (arbitraries as any)[key]
+      const arb: any = arbitraries[key]
       if (Schema.isSchema(arb)) {
         throw new Error("Schemas are not supported yet")
       }
-      result[key] = arb
+      Rec.assignProperty(result, key, arb)
       return result
     }, {} as Record<string, fc.Arbitrary<any>>)
   )

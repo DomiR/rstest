@@ -21,6 +21,15 @@ it.live.each([1, 2, 3])(
   "live each %s",
   (n) => Effect.acquireRelease(Effect.sync(() => expect(n).toEqual(n)), () => Effect.void)
 )
+// `it.for` semantics: an array case reaches the test function whole
+it.effect.each([[1, 2], [3, 4]])(
+  "effect each with array case %s",
+  ([a, b]) => Effect.sync(() => expect(a + 1).toEqual(b))
+)
+it.live.each([[1, 2], [3, 4]])(
+  "live each with array case %s",
+  ([a, b]) => Effect.sync(() => expect(a + 1).toEqual(b))
+)
 
 // skip
 

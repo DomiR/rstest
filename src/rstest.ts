@@ -53,6 +53,14 @@ export const describe = R.describe
 export { afterAll, beforeAll } from "@rstest/core"
 
 /**
+ * rstest's chai-style `assert`, re-exported so upstream `@effect/vitest` docs
+ * and tests that import `assert` from the test package work unchanged.
+ *
+ * @since 1.0.0
+ */
+export { assert } from "@rstest/core"
+
+/**
  * @since 1.0.0
  */
 export const beforeEach = R.beforeEach

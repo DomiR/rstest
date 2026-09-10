@@ -4,7 +4,7 @@
 
 ### Major Changes
 
-- Move the `effect` peer dependency from `^3.15.2` to `^4.0.0-rc.112`, and the `@rstest/core` peer dependency from `^0.0.1` to `^0.11.12`.
+- Move the `effect` peer dependency to `^4.0.0-rc.112` (from `^3.15.2` in this repository's history; the npm-published `2.0.0` targeted `^4.0.0-beta.70`), and the `@rstest/core` peer dependency to `^0.11.12` (from `^0.0.1`; `2.0.0` targeted `^0.10.2`).
 - Drop `it.scoped` and `it.scopedLive`. `it.effect` and `it.live` now always run in a `Scope` (equivalent to the old `scoped`/`scopedLive` behavior), so the four-way effect/live/scoped/scopedLive split collapses into two testers.
 - `it.effect`'s requirement is now `Scope.Scope` instead of `effect/TestServices`'s `TestServices`. The `effect/TestServices` and `effect/TestContext` modules no longer exist in `effect@4`; the test environment (`TestClock`/`TestConsole`) is provided directly as a `Layer`.
 - `it.effect`, `it.live`, and every tester derived from them (`.skip`, `.skipIf`, `.runIf`, `.only`, `.fails`, `.each`, `.prop`) now pass rstest's own `TestContext` (`ctx`, with `ctx.signal`, `ctx.task`, `ctx.onTestFailed`, and so on) through to the test function, matching `@effect/vitest`. The underlying `Effect.runPromise` call is given `ctx.signal`, so a test that times out genuinely interrupts the running fiber (finalizers run) instead of leaving it running in the background.
@@ -16,6 +16,10 @@
 
 ### Patch Changes
 
+- Fix `throws` and `throwsAsync` in `utils`: a thunk that does not throw now fails the assertion instead of passing silently, matching `@effect/vitest`.
+- Re-export rstest's chai-style `assert` from the package entry point, matching `@effect/vitest`'s `assert` export.
+- Restore the README usage guide, ported from `@effect/vitest` 4.0.0-rc.112 and adapted to rstest.
+- Align `utils`, `prop` (`Record.assignProperty`), and the `layer` doc example with `@effect/vitest` 4.0.0-rc.112.
 - Run every package script with `bun run` instead of `pnpm`.
 - `addEqualityTesters` is now a real implementation (`expect.addEqualityTesters([])` from `@rstest/core`) instead of a stub, since rstest's `expect` (backed by `@vitest/expect`) supports custom equality testers.
 - Fix `it.prop` and `it.effect.prop` (array and record forms) to call the `Schema.toArbitrary` factory with the `fast-check` module, matching effect rc.112's `Schema.toArbitrary(schema)(fc)` shape. Passing a `Schema` through these testers previously produced a factory function instead of a fast-check `Arbitrary`, which broke property tests using schema arbitraries at runtime.

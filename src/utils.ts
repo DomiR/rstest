@@ -1,21 +1,15 @@
 /**
- * Assertion utilities for `@domir/rstest` test suites.
+ * Provides assertion helpers used by `@domir/rstest` tests.
  *
- * This module collects small assertion helpers for common Effect testing
- * scenarios: Node-style equality checks, `Equal.equals` comparisons, string
- * matching, thrown error validation, and focused assertions for `Option`,
- * `Result`, and `Exit` values. They are intended to be imported as `assert`
- * helpers from `@domir/rstest` and used in both regular rstest tests and
- * `it.effect` tests after the value under test has already been produced.
- *
- * These helpers throw assertion errors synchronously; they do not run Effects,
- * provide services, or advance test environments such as `TestClock`. In
- * Effect-based tests, yield the effect first and then assert on the resulting
- * value so failures are reported through the surrounding rstest test.
+ * This module defines small assertion functions built on Node's `assert`,
+ * rstest's instance checks, and Effect's equality support. The helpers cover
+ * basic equality, thrown errors, defined and undefined values, strings, regular
+ * expressions, class instances, `Option`, `Result`, and `Exit`. Most helpers are
+ * synchronous; `throwsAsync` handles rejected promises.
  *
  * @since 1.0.0
  */
-import { expect } from "@rstest/core"
+import { assert as rassert } from "@rstest/core"
 import type * as Cause from "effect/Cause"
 import * as Equal from "effect/Equal"
 import * as Exit from "effect/Exit"
@@ -29,7 +23,7 @@ import * as assert from "node:assert"
 // ----------------------------
 
 /**
- * Throws an `AssertionError` with the provided error message.
+ * Fails the current test with the provided error message.
  *
  * @category testing
  * @since 1.0.0
@@ -45,11 +39,7 @@ export function fail(message: string) {
  * @since 1.0.0
  */
 export function deepStrictEqual<A>(actual: A, expected: A, message?: string, ..._: Array<never>) {
-  if (message === undefined) {
-    assert.deepStrictEqual(actual, expected)
-  } else {
-    assert.deepStrictEqual(actual, expected, message)
-  }
+  assert.deepStrictEqual(actual, expected, message as string)
 }
 
 /**
@@ -59,11 +49,7 @@ export function deepStrictEqual<A>(actual: A, expected: A, message?: string, ...
  * @since 1.0.0
  */
 export function notDeepStrictEqual<A>(actual: A, expected: A, message?: string, ..._: Array<never>) {
-  if (message === undefined) {
-    assert.notDeepStrictEqual(actual, expected)
-  } else {
-    assert.notDeepStrictEqual(actual, expected, message)
-  }
+  assert.notDeepStrictEqual(actual, expected, message as string)
 }
 
 /**
@@ -73,10 +59,10 @@ export function notDeepStrictEqual<A>(actual: A, expected: A, message?: string, 
  * @since 1.0.0
  */
 export function strictEqual<A>(actual: A, expected: A, message?: string, ..._: Array<never>) {
-  if (message === undefined) {
-    assert.strictEqual(actual, expected)
-  } else {
+  if (message !== undefined) {
     assert.strictEqual(actual, expected, message)
+  } else {
+    assert.strictEqual(actual, expected)
   }
 }
 
@@ -119,7 +105,7 @@ export function assertInstanceOf<C extends abstract new(...args: any) => any>(
   message?: string,
   ..._: Array<never>
 ): asserts value is InstanceType<C> {
-  expect(value, message).toBeInstanceOf(constructor)
+  rassert.instanceOf(value, constructor as any, message)
 }
 
 /**
@@ -149,7 +135,7 @@ export function assertFalse(self: boolean, message?: string, ..._: Array<never>)
  * @since 1.0.0
  */
 export function assertInclude(actual: string | undefined, expected: string, ..._: Array<never>) {
-  if (Predicate.isString(expected)) {
+  if (typeof expected === "string") {
     if (!actual?.includes(expected)) {
       fail(`Expected\n\n${actual}\n\nto include\n\n${expected}`)
     }
@@ -177,7 +163,6 @@ export function assertMatch(actual: string, regExp: RegExp, ..._: Array<never>) 
 export function throws(thunk: () => void, error?: Error | ((u: unknown) => undefined), ..._: Array<never>) {
   try {
     thunk()
-    fail("Expected to throw an error")
   } catch (e) {
     if (error !== undefined) {
       if (Predicate.isFunction(error)) {
@@ -188,7 +173,9 @@ export function throws(thunk: () => void, error?: Error | ((u: unknown) => undef
         throw e
       }
     }
+    return
   }
+  fail("Expected to throw an error")
 }
 
 /**
@@ -204,7 +191,6 @@ export async function throwsAsync(
 ) {
   try {
     await thunk()
-    fail("Expected to throw an error")
   } catch (e) {
     if (error !== undefined) {
       if (Predicate.isFunction(error)) {
@@ -213,7 +199,9 @@ export async function throwsAsync(
         deepStrictEqual(e, error)
       }
     }
+    return
   }
+  fail("Expected to throw an error")
 }
 
 // ----------------------------
