@@ -1,46 +1,46 @@
 /**
  * @since 1.0.0
  */
-import * as R from "@rstest/core"
+import * as R from '@rstest/core';
 
 /**
  * @since 1.0.0
  */
-export type TestAPI = typeof R.it
+export type TestAPI = typeof R.it;
 
 /**
  * @since 1.0.0
  */
-export type TestOptions = R.TestOptions
+export type TestOptions = R.TestOptions;
 
 /**
  * @since 1.0.0
  */
-export type TestContext = R.TestContext
+export type TestContext = R.TestContext;
 
 /**
  * @since 1.0.0
  */
 export type TestFunction = (
-  label: string,
-  fn: (() => void | Promise<void>) | ((context: TestContext) => void | Promise<void>),
-  options?: number | TestOptions
-) => void
+	label: string,
+	fn: (() => void | Promise<void>) | ((context: TestContext) => void | Promise<void>),
+	options?: number | TestOptions
+) => void;
 
 /**
  * @since 1.0.0
  */
-export type SuiteCollector = any
+export type SuiteCollector = any;
 
 /**
  * @since 1.0.0
  */
-export const it: TestAPI = R.it
+export const it: TestAPI = R.it;
 
 /**
  * @since 1.0.0
  */
-export const describe = R.describe
+export const describe = R.describe;
 
 /**
  * `beforeAll`/`afterAll` are re-exported (rather than assigned to a local
@@ -50,7 +50,7 @@ export const describe = R.describe
  *
  * @since 1.0.0
  */
-export { afterAll, beforeAll } from "@rstest/core"
+export { afterAll, beforeAll } from '@rstest/core';
 
 /**
  * rstest's chai-style `assert`, re-exported so upstream `@effect/vitest` docs
@@ -58,19 +58,19 @@ export { afterAll, beforeAll } from "@rstest/core"
  *
  * @since 1.0.0
  */
-export { assert } from "@rstest/core"
+export { assert } from '@rstest/core';
 
 /**
  * @since 1.0.0
  */
-export const beforeEach = R.beforeEach
+export const beforeEach = R.beforeEach;
 
 /**
  * @since 1.0.0
  */
-export const afterEach = R.afterEach
+export const afterEach = R.afterEach;
 
 /**
  * @since 1.0.0
  */
-export const expect = R.expect
+export const expect = R.expect;
