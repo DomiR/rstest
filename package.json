@@ -1,6 +1,6 @@
 {
 	"name": "@domir/rstest",
-	"version": "1.0.0",
+	"version": "3.0.0",
 	"description": "A set of helpers for testing Effects with rstest test",
 	"homepage": "https://github.com/DomiR/rstest",
 	"bugs": {
